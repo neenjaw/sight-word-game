@@ -45,6 +45,7 @@ let SightWord = (function() {
   'use strict';
 
   let settings,
+      gameParam,
       dictionary;
 
   /**
@@ -57,15 +58,12 @@ let SightWord = (function() {
 
   function pushDictionary(dict, items) {
     for (var i = 0; i < items.length; i++) {
-      dict[items[i]] = createDictionaryEntry(items[i]);
+      dict[items[i]] = {entry: items[i]};
     }
   }
 
-  function createDictionaryEntry(item) {
-    let word = item;
-    let utterance = new SpeechSynthesisUtterance(item);
-
-    return {item, utterance};
+  function randomWord() {
+    return dictionary[settings.flatWords[randomValue(0, settings.flatWords.length)]];
   }
 
   function randomValue(min, max) {
@@ -74,8 +72,58 @@ let SightWord = (function() {
 
   function startKeyboardListener() {
     document.addEventListener("keypress", (e) => {
-      speakWord(e.key);
-    })
+      console.log(">" + e.key + " was pressed!")
+
+      guessLetter(e.key);
+    });
+
+    return true;
+  }
+
+  function startWordClickListener() {
+    let elem = document.getElementById(settings.ids.word);
+
+    elem.addEventListener("click", (e) => {
+      speakWord(elem.textContent);
+    });
+
+    return true;
+  }
+
+  function guessLetter(letter) {
+    if (!gameParam.roundFinished && letter.toLowerCase() === gameParam.roundWord[gameParam.roundWordIndex].toLowerCase()) {
+      speakWord(letter);
+
+      gameParam.roundGuess = gameParam.roundGuess.substr(0,gameParam.roundWordIndex) +
+                             gameParam.roundWord[gameParam.roundWordIndex] +
+                             gameParam.roundGuess.substr(gameParam.roundWordIndex + 1);
+
+      document.getElementById(settings.ids.guess).textContent = gameParam.roundGuess;
+
+      gameParam.roundWordIndex += 1;
+
+      if (gameParam.roundWordIndex >= gameParam.roundWord.length) {
+        winRound();
+      }
+    }
+  }
+
+  function winRound() {
+    gameParam.roundFinished = true;
+
+    setTimeout(function () {
+      if (gameParam.round == gameParam.wordsPerRound) {
+        winGame();
+      } else {
+        newRound();
+      }
+    }, 3000);
+  }
+
+  function winGame() {
+    alert("You won!");
+
+    newGame();
   }
 
   /**
@@ -87,31 +135,71 @@ let SightWord = (function() {
     initialSettings = initialSettings || {};
     settings = initialSettings;
 
+    //default flags
+    settings.initSuccess = true;
+
+    //default word libraries
     settings.alphabet = settings.alphabet || [];
     settings.words = settings.words || [];
     settings.flatWords = flattenWords(settings.words);
 
+    //default synth
     settings.synth = settings.synth || window.speechSynthesis;
 
-    settings.gameParam = settings.gameParam || {};
-    settings.gameParam.wordsPerRound = settings.gameParam.wordsPerRound || [10, 10, 10, 10, 10];
+    //default element ids
+    settings.ids = settings.ids || {};
+    settings.ids.word = settings.ids.word || "word"
+    settings.ids.guess = settings.ids.guess || "guess"
 
+    //default game parameters
+    gameParam = gameParam || {};
+    gameParam.wordsPerRound = gameParam.wordsPerRound || 10;
+    //default game parameters
+    gameParam.gameFinished = true;
+    gameParam.round = 0;
+    gameParam.roundFinished = true;
+    gameParam.roundWord = "";
+    gameParam.roundGuess = "";
+    gameParam.roundWordIndex = 0;
+
+    //make the dictionary
     dictionary = {};
-
     pushDictionary(dictionary, settings.alphabet);
     pushDictionary(dictionary, settings.flatWords);
 
+    //start the listeners
     startKeyboardListener();
+    startWordClickListener();
 
-    newGame();
+    if (settings.initSuccess) {
+      newGame();
+    } else {
+      console.log("Sight Words Initialization Failed.");
+    }
   }
 
   function newGame() {
+    gameParam.gameFinished = false;
+    gameParam.round = 0;
 
+    newRound();
   }
 
   function newRound() {
+    gameParam.round += 1;
+    gameParam.roundFinished = false;
+    gameParam.roundWord = randomWord().entry;
+    gameParam.roundGuess = gameParam.roundWord.replace(/./g, "_");
+    gameParam.roundWordIndex = 0;
 
+    document.getElementById(settings.ids.word).innerText = gameParam.roundWord;
+    document.getElementById(settings.ids.guess).innerText = gameParam.roundGuess;
+
+    let stmt = `Can you spell the word, ${gameParam.roundWord}?`,
+        utt = new SpeechSynthesisUtterance(stmt);
+
+    settings.synth.cancel();
+    settings.synth.speak(utt);
   }
 
   function getWords() {
@@ -126,12 +214,16 @@ let SightWord = (function() {
     return settings.alphabet;
   }
 
-  function speakRandomWord() {
-    settings.synth.speak(dictionary[settings.flatWords[randomValue(0, settings.flatWords.length)]].utterance);
-  }
-
   function speakWord(word) {
-    settings.synth.speak(dictionary[word].utterance);
+    let entry = dictionary[word].entry,
+        utt = new SpeechSynthesisUtterance(entry);
+
+    utt.onend = function(e) {
+      console.log(">>" + e.utterance.text + " utterance done");
+    };
+
+    settings.synth.cancel();
+    settings.synth.speak(utt);
   }
 
   /**
@@ -141,7 +233,7 @@ let SightWord = (function() {
   return {
     init, newGame,
     getWords, getAlphabet, getDictionary,
-    speakRandomWord, speakWord
+    speakWord
   };
 }());
 

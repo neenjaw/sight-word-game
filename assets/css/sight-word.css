@@ -22,14 +22,23 @@ h1 {
 }
 
 h2 {
-  font-size: 4.0rem;
+  font-size: 4.5em;
 }
 
 #word {
 
 }
 
-#type {
-  text-indent: 1.0em;
-  letter-spacing: 1.0em;
+#guess {
+  font-size: 5.5em;
+  font-weight: 700;
+  text-indent: 50px;
+  letter-spacing: 50px;
+
+  transition: letter-spacing 2s ease-in-out, text-indent 2s ease-in-out;
+}
+
+#guess.win {
+  text-indent: 0px;
+  letter-spacing: normal;
 }
