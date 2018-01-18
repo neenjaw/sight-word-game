@@ -1,0 +1,35 @@
+html, body {
+  height: 100%;
+  width: 100%;
+
+  font-family: 'Ubuntu Mono', monospace;
+
+  background-color: rgb(41, 43, 46);
+  color: rgb(214, 214, 214);
+}
+
+header {
+  width: 100%;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  margin-bottom: 30px;
+
+  background-color: rgb(0, 74, 186);
+}
+
+h1 {
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 4.0rem;
+}
+
+#word {
+
+}
+
+#type {
+  text-indent: 1.0em;
+  letter-spacing: 1.0em;
+}

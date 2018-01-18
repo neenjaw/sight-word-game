@@ -51,6 +51,33 @@ let SightWord = (function() {
    **  Private Functions
    **/
 
+  function flattenWords(words) {
+    return words.reduce((a, b) => { return a.concat(b) }, []);;
+  }
+
+  function pushDictionary(dict, items) {
+    for (var i = 0; i < items.length; i++) {
+      dict[items[i]] = createDictionaryEntry(items[i]);
+    }
+  }
+
+  function createDictionaryEntry(item) {
+    let word = item;
+    let utterance = new SpeechSynthesisUtterance(item);
+
+    return {item, utterance};
+  }
+
+  function randomValue(min, max) {
+    return Math.floor(Math.random()*(max-min+1)+min);
+  }
+
+  function startKeyboardListener() {
+    document.addEventListener("keypress", (e) => {
+      speakWord(e.key);
+    })
+  }
+
   /**
    **  Public Functions
    **/
@@ -62,10 +89,49 @@ let SightWord = (function() {
 
     settings.alphabet = settings.alphabet || [];
     settings.words = settings.words || [];
+    settings.flatWords = flattenWords(settings.words);
+
+    settings.synth = settings.synth || window.speechSynthesis;
+
+    settings.gameParam = settings.gameParam || {};
+    settings.gameParam.wordsPerRound = settings.gameParam.wordsPerRound || [10, 10, 10, 10, 10];
 
     dictionary = {};
-    pushDictionary(settings.alphabet);
-    pushDictionary(settings.words);
+
+    pushDictionary(dictionary, settings.alphabet);
+    pushDictionary(dictionary, settings.flatWords);
+
+    startKeyboardListener();
+
+    newGame();
+  }
+
+  function newGame() {
+
+  }
+
+  function newRound() {
+
+  }
+
+  function getWords() {
+    return settings.words;
+  }
+
+  function getDictionary() {
+    return dictionary;
+  }
+
+  function getAlphabet() {
+    return settings.alphabet;
+  }
+
+  function speakRandomWord() {
+    settings.synth.speak(dictionary[settings.flatWords[randomValue(0, settings.flatWords.length)]].utterance);
+  }
+
+  function speakWord(word) {
+    settings.synth.speak(dictionary[word].utterance);
   }
 
   /**
@@ -73,6 +139,10 @@ let SightWord = (function() {
   **/
 
   return {
-    init
+    init, newGame,
+    getWords, getAlphabet, getDictionary,
+    speakRandomWord, speakWord
   };
 }());
+
+SightWord.init({alphabet, words});
