@@ -110,6 +110,7 @@ let SightWord = (function() {
 
   function winRound() {
     gameParam.roundFinished = true;
+    document.getElementById(settings.ids.guess).classList.add(settings.classes.win);
 
     setTimeout(function () {
       if (gameParam.round == gameParam.wordsPerRound) {
@@ -124,6 +125,36 @@ let SightWord = (function() {
     alert("You won!");
 
     newGame();
+  }
+
+  function getWords() {
+    return settings.words;
+  }
+
+  function getDictionary() {
+    return dictionary;
+  }
+
+  function getAlphabet() {
+    return settings.alphabet;
+  }
+
+  function newRound() {
+    gameParam.round += 1;
+    gameParam.roundFinished = false;
+    gameParam.roundWord = randomWord().entry;
+    gameParam.roundGuess = gameParam.roundWord.replace(/./g, "_");
+    gameParam.roundWordIndex = 0;
+
+    document.getElementById(settings.ids.word).innerText = gameParam.roundWord;
+    document.getElementById(settings.ids.guess).classList.remove(settings.classes.win);
+    document.getElementById(settings.ids.guess).innerText = gameParam.roundGuess;
+
+    let stmt = `Can you spell the word, ${gameParam.roundWord}?`,
+        utt = new SpeechSynthesisUtterance(stmt);
+
+    settings.synth.cancel();
+    settings.synth.speak(utt);
   }
 
   /**
@@ -145,6 +176,10 @@ let SightWord = (function() {
 
     //default synth
     settings.synth = settings.synth || window.speechSynthesis;
+
+    //default element classes
+    settings.classes = settings.classes || {};
+    settings.classes.win = settings.classes.win || "win"
 
     //default element ids
     settings.ids = settings.ids || {};
@@ -185,35 +220,6 @@ let SightWord = (function() {
     newRound();
   }
 
-  function newRound() {
-    gameParam.round += 1;
-    gameParam.roundFinished = false;
-    gameParam.roundWord = randomWord().entry;
-    gameParam.roundGuess = gameParam.roundWord.replace(/./g, "_");
-    gameParam.roundWordIndex = 0;
-
-    document.getElementById(settings.ids.word).innerText = gameParam.roundWord;
-    document.getElementById(settings.ids.guess).innerText = gameParam.roundGuess;
-
-    let stmt = `Can you spell the word, ${gameParam.roundWord}?`,
-        utt = new SpeechSynthesisUtterance(stmt);
-
-    settings.synth.cancel();
-    settings.synth.speak(utt);
-  }
-
-  function getWords() {
-    return settings.words;
-  }
-
-  function getDictionary() {
-    return dictionary;
-  }
-
-  function getAlphabet() {
-    return settings.alphabet;
-  }
-
   function speakWord(word) {
     let entry = dictionary[word].entry,
         utt = new SpeechSynthesisUtterance(entry);
@@ -231,9 +237,7 @@ let SightWord = (function() {
   **/
 
   return {
-    init, newGame,
-    getWords, getAlphabet, getDictionary,
-    speakWord
+    init, newGame, speakWord
   };
 }());
 
